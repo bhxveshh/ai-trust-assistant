@@ -10,7 +10,9 @@ dotenv.config();
 
 // Connect to Database
 connectDB();
-
+app.use(cors({
+  origin: "https://ai-trust-assistant.vercel.app/"
+}));
 // Initialize the app
 const app = express();
 
