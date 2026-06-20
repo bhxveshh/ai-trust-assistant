@@ -22,8 +22,7 @@ import { ApiError, type AnalysisRecord, type AuthResponse } from './types';
  * `credentials: 'include'` and drop the token plumbing in auth store.
  */
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'https://ai-trust-assistant.onrender.com';
-
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'https://ai-trust-assistant.onrender.com/api';
 async function request<T>(
   path: string,
   options: { method?: string; body?: unknown; token?: string | null } = {}
