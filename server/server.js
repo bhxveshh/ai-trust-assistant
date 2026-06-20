@@ -8,13 +8,15 @@ const analysisRoutes = require('./routes/analysisRoutes');
 // Load environment variables
 dotenv.config();
 
+// Initialize the app
+const app = express();
+
 // Connect to Database
 connectDB();
 app.use(cors({
   origin: "https://ai-trust-assistant.vercel.app/"
 }));
-// Initialize the app
-const app = express();
+
 
 // Middleware
 app.use(cors()); // Allows frontend to communicate with backend
