@@ -13,25 +13,40 @@ const app = express();
 
 // Connect to Database
 connectDB();
+
+// Allowed frontend origins (no trailing slashes!)
+const allowedOrigins = [
+  "https://ai-trust-assistant.vercel.app",
+  "https://ai-trust-assistant-git-main-rishik28.vercel.app",
+  "https://ai-trust-assistant-wid5y1md8-rishik28.vercel.app",
+  "http://localhost:5173", // for local dev with Vite
+];
+
+// CORS - single call, no duplicates
 app.use(cors({
-  origin: "https://ai-trust-assistant.vercel.app/"
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
 }));
 
-
 // Middleware
-app.use(cors()); // Allows frontend to communicate with backend
 app.use(express.json()); // Parses incoming JSON payloads
 app.use(express.urlencoded({ extended: true })); // Parses URL-encoded data
 
-
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/analysis', analysisRoutes);
 
 // Basic Health Check Route
 app.get('/api/status', (req, res) => {
-    res.status(200).json({ 
-        success: true, 
-        message: 'AI Trust Assistant API is running smoothly.' 
+    res.status(200).json({
+        success: true,
+        message: 'AI Trust Assistant API is running smoothly.'
     });
 });
 
