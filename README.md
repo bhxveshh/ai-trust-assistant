@@ -1,69 +1,132 @@
-🛡️ AI Trust Assistant
+# 🛡️ AI Trust Assistant
+
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Svelte](https://img.shields.io/badge/Svelte-5-FF3E00?logo=svelte&logoColor=white)](https://svelte.dev/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#-license)
 
 An enterprise-grade, AI-powered e-commerce fraud detection engine.
 
-AI Trust Assistant evaluates the legitimacy of online product listings (e.g. Amazon) by combining real-time on-page HTML scraping, a 5-lane parallel web context search, and deterministic LLM evaluation to generate a comprehensive trust score.
+**AI Trust Assistant** evaluates the legitimacy of online product listings (e.g., Amazon) by combining real-time on-page HTML scraping, a 5-lane parallel web context search, and deterministic LLM evaluation to generate a comprehensive trust score — all surfaced through a "Clinical Authority" dashboard built in Svelte 5.
 
-Show Image
-Show Image
-Show Image
-Show Image
+<!-- 📸 Replace this with a real screenshot or GIF of your app — see "Adding Images" at the bottom of this README -->
+![AI Trust Assistant UI](docs/screenshot-dashboard.png)
 
-Live Demo · Report Bug · Request Feature
+---
 
-</div>
+## 📑 Table of Contents
 
-📸 Preview
+- [Features](#-features)
+- [How It Works](#-how-it-works)
+- [Architecture & Tech Stack](#%EF%B8%8F-architecture--tech-stack)
+- [Project Structure](#-project-structure)
+- [Data Contract](#%EF%B8%8F-data-contract)
+- [Getting Started](#-getting-started)
+- [Environment Variables](#-environment-variables)
+- [Usage](#-usage)
+- [Roadmap](#-roadmap)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Adding Images to This README](#-adding-images-to-this-readme-next-steps)
 
-<table>
-<tr>
-<td align="center" width="33%"><b>Sign In</b></td>
-<td align="center" width="33%"><b>New Case Intake</b></td>
-<td align="center" width="33%"><b>Case File & Verdict</b></td>
-</tr>
-<tr>
-<td><img src="screenshots/01-login.png" width="100%"/></td>
-<td><img src="screenshots/02-investigate-listing.png" width="100%"/></td>
-<td><img src="screenshots/03-case-result.png" width="100%"/></td>
-</tr>
-</table>
+---
 
-✨ Features
+## ✨ Features
 
+- **Live Data Extraction** — Scrapes high-res product images, real-time pricing, ratings, and technical specifications directly from e-commerce URLs using Cheerio and browser-header spoofing (to avoid bot-blocking).
+- **Parallel Context Gathering** — Executes a 5-lane multi-agent search pipeline via SerpAPI, each lane returning structured signal for one dimension of trust:
 
-Live Data Extraction — scrapes high-res product images, real-time pricing, ratings, and technical specifications directly from e-commerce URLs using Cheerio and browser spoofing.
-Parallel Context Gathering — executes a 5-lane multi-agent search pipeline via SerpAPI to extract:
+  | Lane | Purpose |
+  |---|---|
+  | 🏷️ Product Reputation | General sentiment / review consensus for the product itself |
+  | 🌐 Seller Domain Trust | Age, reputation, and history of the seller/domain |
+  | 🚩 Explicit Fraud Signals | Scam reports, counterfeit warnings, takedown notices |
+  | 💰 Market Price Benchmarks | Cross-references listed price against market average to flag "too good to be true" pricing |
+  | 📣 Seller Complaint History | Aggregated complaints, chargebacks, and unresolved disputes |
 
-Product Reputation
-Seller Domain Trust
-Explicit Fraud Signals
-Market Price Benchmarks
-Seller Complaint History
+- **Deterministic AI Evaluation** — Feeds the structured, pre-labeled data from the steps above into Google's **Gemini 2.5 Flash** using a tightly constrained "Clinical Authority" system prompt, so the model scores risk against fixed rules instead of free-associating — minimizing hallucinated verdicts.
+- **"Clinical Authority" UI/UX** — A responsive dashboard that splits the difference between a luxury storefront and a financial diagnostic terminal: dark slate background, emerald accent for "safe," amber/red for risk tiers.
+- **Custom Svelte 5 Architecture** — Built on Svelte 5 runes (`$state`, `$derived`) for fine-grained reactivity, with a hand-calculated SVG semicircle gauge driving the trust-score visualization (no charting library overhead).
 
+## 🔄 How It Works
 
+The analysis pipeline runs in four stages, end-to-end, per submitted URL:
 
-Deterministic AI Evaluation — feeds structured, pre-labeled data into Google's Gemini 2.5 Flash using a tightly constrained "Clinical Authority" system prompt, ensuring mathematically grounded risk assessment without AI hallucinations.
-"Clinical Authority" UI/UX — a responsive dashboard built to feel like a hybrid between a luxury storefront and a financial diagnostic terminal.
-Custom Svelte 5 Architecture — built on the latest Svelte 5 runes ($state, $derived) for flawless reactivity, alongside a mathematically calculated SVG semicircle gauge for data visualization.
+```
+ ┌─────────────┐     ┌──────────────────┐     ┌────────────────────┐     ┌──────────────┐
+ │  1. Scrape  │ ──▶ │ 2. Parallel Search│ ──▶ │ 3. AI Evaluation    │ ──▶ │ 4. Score &   │
+ │  (Cheerio)  │     │ (5-lane SerpAPI)  │     │ (Gemini 2.5 Flash)  │     │ Verdict      │
+ └─────────────┘     └──────────────────┘     └────────────────────┘     └──────────────┘
+```
 
+1. **Scrape** — The backend fetches the target URL and parses title, price, rating, image, and spec table from the raw HTML.
+2. **Parallel Search** — The five context lanes above fire concurrently against SerpAPI so total latency is bounded by the slowest single lane, not the sum of all five.
+3. **AI Evaluation** — All scraped + searched data is compiled into one structured payload and sent to Gemini under a constrained prompt that enforces a fixed scoring rubric and output schema.
+4. **Score & Verdict** — Gemini's structured JSON response (trust score, red flags, verdict) is persisted to MongoDB and streamed to the dashboard, where the SVG gauge animates to the final value.
 
+## 🏗️ Architecture & Tech Stack
 
-🏗️ Architecture & Tech Stack
+### Frontend (Client)
+| Layer | Choice |
+|---|---|
+| Framework | Svelte 5 (Vite) + TypeScript |
+| Styling | Tailwind CSS — dark mode, Slate & Emerald theme |
+| Icons | lucide-svelte |
+| State | Svelte 5 runes (`$state`, `$derived`, `$effect`) |
+| Visualization | Hand-built SVG semicircle gauge (no chart library) |
 
-Frontend (Client)
+### Backend (Server)
+| Layer | Choice |
+|---|---|
+| Runtime | Node.js + Express.js |
+| Database | MongoDB via Mongoose |
+| Scraping | Cheerio + Axios |
+| AI | Google Gemini 2.5 Flash (`@google/generative-ai`) |
+| Web Context | SerpAPI (Google Search aggregation) |
+| Auth | JWT (`jsonwebtoken`) |
 
-FrameworkSvelte 5 (Vite) + TypeScriptStylingTailwind CSS (Dark Mode / Slate & Emerald theme)IconsLucide-SvelteState ManagementSvelte 5 RunesDeployed onVercel
+## 📁 Project Structure
 
-Backend (Server)
+A typical layout for this repo — adjust to match your actual folder names if they differ:
 
-RuntimeNode.js + Express.jsDatabaseMongoDB (via Mongoose)ScrapingCheerio, AxiosExternal APIsGoogle Gemini 2.5 Flash (@google/generative-ai), SerpAPIDeployed onRender
+```
+ai-trust-assistant/
+├── client/                      # Svelte 5 + Vite frontend
+│   ├── src/
+│   │   ├── lib/
+│   │   │   ├── components/      # Gauge, ScanForm, ResultCard, etc.
+│   │   │   └── stores/          # Svelte 5 runes-based state
+│   │   ├── routes/ (or App.svelte)
+│   │   └── app.css              # Tailwind entry
+│   ├── public/
+│   ├── index.html
+│   └── package.json
+│
+├── server/                      # Express backend
+│   ├── src/
+│   │   ├── routes/              # /api/scan, /api/history, /api/auth
+│   │   ├── controllers/
+│   │   ├── services/
+│   │   │   ├── scraper.service.js     # Cheerio/Axios scraping logic
+│   │   │   ├── search.service.js      # 5-lane SerpAPI pipeline
+│   │   │   └── ai.service.js          # Gemini prompt + parsing
+│   │   ├── models/
+│   │   │   └── AnalysisRecord.js      # Mongoose schema (see Data Contract)
+│   │   └── middleware/
+│   ├── .env                     # Local secrets (never commit this)
+│   └── package.json
+│
+├── docs/                        # Screenshots, diagrams, demo GIFs (see below)
+├── .gitignore
+└── README.md
+```
 
+## 🗄️ Data Contract
 
-🗄️ Data Contract
+The pipeline operates on a strict, deterministic JSON schema so the UI always receives structured, predictable data:
 
-The pipeline operates on a strict, deterministic JSON schema to ensure the UI always receives structured, predictable data:
-
-typescriptinterface AnalysisRecord {
+```typescript
+interface AnalysisRecord {
   user: string; // MongoDB ObjectId
   targetUrl: string;
   scrapedData: {
@@ -80,81 +143,128 @@ typescriptinterface AnalysisRecord {
     verdict: "Highly Trusted" | "Exercise Caution" | "High Risk";
   };
 }
+```
 
+**Verdict thresholds** (suggested — tune to your prompt's actual rubric):
 
-🔌 API Reference
+| Trust Score | Verdict |
+|---|---|
+| 75–100 | ✅ Highly Trusted |
+| 40–74 | ⚠️ Exercise Caution |
+| 0–39 | 🚨 High Risk |
 
-Base URL: https://ai-trust-assistant.onrender.com/api
+## 🚀 Getting Started
 
-MethodEndpointAuth requiredDescriptionPOST/auth/register❌Create a new accountPOST/auth/login❌Sign in and receive a JWTPOST/analysis✅ (Bearer)Submit a listing URL for investigationGET/analysis/:id✅ (Bearer)Retrieve a saved case file by IDGET/status❌Health check
+Follow these steps to get a copy of the project running locally for development and testing.
 
-Authenticated requests expect:
+### Prerequisites
 
-Authorization: Bearer <token>
+- **Node.js** v18+ ([download](https://nodejs.org/))
+- **MongoDB** — local instance or a free [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cluster
+- **Gemini API Key** — [get one here](https://aistudio.google.com/)
+- **SerpAPI Key** — [get one here](https://serpapi.com/)
+- **Git** ([download](https://git-scm.com/))
 
+### 1. Clone the Repository
 
-🚀 Getting Started
-
-Prerequisites
-
-
-Node.js (v18+)
-A MongoDB connection string (Atlas or local)
-A Gemini API key
-A SerpAPI key
-
-
-1. Clone the repo
-
-bashgit clone https://github.com/bhxveshh/ai-trust-assistant.git
+```bash
+git clone https://github.com/yourusername/ai-trust-assistant.git
 cd ai-trust-assistant
+```
 
-2. Backend setup
+### 2. Backend Setup
 
-bashcd backend
+```bash
+cd server
 npm install
+```
 
-Create a .env file in backend/:
+Create a `.env` file in the `server` directory (use the table in [Environment Variables](#-environment-variables) below):
 
-envPORT=5000
+```bash
+PORT=5000
 MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
 GEMINI_API_KEY=your_gemini_api_key
 SERPAPI_KEY=your_serpapi_key
+JWT_SECRET=your_jwt_secret_for_auth
+```
 
-Run it:
+Start the backend in dev mode:
 
-bashnode server.js
+```bash
+npm run dev
+```
 
-3. Frontend setup
+### 3. Frontend Setup
 
-bashcd frontend
+Open a **new terminal tab**:
+
+```bash
+cd client
 npm install
+npm run dev
+```
 
-Create a .env file in frontend/:
+### 4. Run the Application
 
-envVITE_API_BASE_URL=http://localhost:5000/api
+Open your browser at **http://localhost:5173**, paste an Amazon (or other supported) product URL into the scan interface, and run your first trust analysis.
 
-Run it:
+## 🔑 Environment Variables
 
-bashnpm run dev
+Create `server/.env` with the following keys. **Never commit this file** — make sure `.env` is listed in `.gitignore`.
 
+| Variable | Required | Description |
+|---|---|---|
+| `PORT` | No (defaults to `5000`) | Port the Express server listens on |
+| `MONGO_URI` | ✅ | MongoDB connection string (local or Atlas) |
+| `GEMINI_API_KEY` | ✅ | API key for Google Gemini 2.5 Flash |
+| `SERPAPI_KEY` | ✅ | API key for SerpAPI search lanes |
+| `JWT_SECRET` | ✅ | Secret used to sign/verify auth tokens |
 
-When deploying, set VITE_API_BASE_URL to your production backend URL (e.g. https://ai-trust-assistant.onrender.com/api) in your hosting provider's environment variable settings, then rebuild — Vite bakes env vars in at build time.
+> 💡 Tip: ship a `server/.env.example` file with the same keys but no real values, so contributors know exactly what to fill in.
 
+## 🖥️ Usage
 
+1. Launch both the client and server as described above.
+2. Paste a product URL (e.g., an Amazon listing) into the input field.
+3. The app scrapes the listing, runs the 5-lane search, and sends everything to Gemini for scoring.
+4. Review the result: trust score gauge, verdict badge, AI-generated summary, and any red flags surfaced during analysis.
+5. Past scans are persisted to MongoDB and viewable from your scan history (if authenticated).
 
+## 🗺️ Roadmap
 
-🌐 Live Deployment
+Some natural next steps for the project:
 
-ServicePlatformURLFrontendVercelai-trust-assistant.vercel.appBackendRenderai-trust-assistant.onrender.com
+- [ ] Support for additional marketplaces (eBay, Walmart, Etsy)
+- [ ] Browser extension for one-click scans from any product page
+- [ ] Confidence intervals on the trust score, not just a point estimate
+- [ ] Caching layer to avoid re-scraping/re-searching identical URLs within a TTL window
+- [ ] Public read-only "shareable report" links for scan results
 
+## 🤝 Contributing
 
-⚠️ The backend runs on Render's free tier, which spins down after inactivity. The first request after idling may take 30–50+ seconds while it wakes up.
+Contributions, issues, and feature requests are welcome!
 
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
+Feel free to check the [issues page](https://github.com/yourusername/ai-trust-assistant/issues) for open tasks.
 
+## 📝 License
 
-📄 License
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
-This project is open source. Add your preferred license (MIT, Apache 2.0, etc.) here.
+## 🙏 Acknowledgments
+
+- [Google Gemini](https://ai.google.dev/) for the evaluation model
+- [SerpAPI](https://serpapi.com/) for search aggregation
+- [Svelte](https://svelte.dev/) for the reactive frontend framework
+
+---
+
+## 🖼️ Adding Images to This README (Next Steps)
+
+See the chat response below for a full walkthrough — short version: drop image files in a `docs/` folder, reference them with standard Markdown syntax, and GitHub will render them automatically once pushed.
