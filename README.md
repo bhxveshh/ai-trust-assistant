@@ -264,7 +264,3 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 - [Svelte](https://svelte.dev/) for the reactive frontend framework
 
 ---
-
-## 🖼️ Adding Images to This README (Next Steps)
-
-See the chat response below for a full walkthrough — short version: drop image files in a `docs/` folder, reference them with standard Markdown syntax, and GitHub will render them automatically once pushed.
